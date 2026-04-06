@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenViking Architecture Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        h2 {
+            color: #1e3c72;
+            border-left: 5px solid #667eea;
+            padding-left: 15px;
+            margin: 40px 0 20px 0;
+            font-size: 1.8em;
+        }
+
+        h3 {
+            color: #2a5298;
+            border-left: 3px solid #764ba2;
+            padding-left: 12px;
+            margin: 30px 0 15px 0;
+            font-size: 1.4em;
+        }
+
+        h4 {
+            color: #3a6ea5;
+            margin: 20px 0 10px 0;
+            font-size: 1.1em;
+        }
+
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        .overview-box {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 2px solid #667eea;
+        }
+
+        .overview-box h3 {
+            margin-top: 0;
+            color: #1e3c72;
+        }
+
+        .architecture-diagram {
+            background: #1a1a2e;
+            color: #00ff88;
+            font-family: 'Consolas', 'Monaco', monospace;
+            padding: 30px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 20px 0;
+            white-space: pre;
+            line-height: 1.4;
+        }
+
+        .architecture-diagram .arrow {
+            color: #00ccff;
+        }
+
+        .architecture-diagram .box {
+            color: #ffcc00;
+        }
+
+        .architecture-diagram .module {
+            color: #ff6699;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f5f7fa;
+        }
+
+        .tree-view {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .tree-view pre {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre;
+            margin: 0;
+            color: #333;
+        }
+
+        .tree-view .dir {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .tree-view .file {
+            color: #2a5298;
+        }
+
+        .tree-view .abstract {
+            color: #28a745;
+        }
+
+        .tree-view .overview {
+            color: #ffc107;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin: 3px;
+        }
+
+        .badge-rust {
+            background: #dea584;
+            color: #1a1a1a;
+        }
+
+        .badge-python {
+            background: #4584b6;
+            color: white;
+        }
+
+        .badge-cpp {
+            background: #f34b2d;
+            color: white;
+        }
+
+        .badge-core {
+            background: #667eea;
+            color: white;
+        }
+
+        .badge-storage {
+            background: #2a5298;
+            color: white;
+        }
+
+        .badge-api {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-service {
+            background: #e67e22;
+            color: white;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+            border-left: 4px solid #dc3545;
+            padding: 20px;
+            border-radius: 0 10px 10px 0;
+            margin: 20px 0;
+        }
+
+        .highlight-box.success {
+            background: linear-gradient(135deg, #f0fff4 0%, #e5ffe5 100%);
+            border-left-color: #28a745;
+        }
+
+        .highlight-box.info {
+            background: linear-gradient(135deg, #e7f5ff 0%, #d4edff 100%);
+            border-left-color: #17a2b8;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .feature-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .feature-card h4 {
+            color: #667eea;
+            margin-top: 0;
+        }
+
+        .plugin-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .plugin-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .plugin-item strong {
+            color: #1e3c72;
+        }
+
+        .code-block {
+            background: #1a1a2e;
+            color: #00ff88;
+            font-family: 'Consolas', 'Monaco', monospace;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        .code-block .keyword {
+            color: #ff79c6;
+        }
+
+        .code-block .string {
+            color: #f1fa8c;
+        }
+
+        .code-block .comment {
+            color: #6272a4;
+        }
+
+        .code-block .function {
+            color: #8be9fd;
+        }
+
+        footer {
+            background: #1a1a2e;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        footer p {
+            margin: 5px 0;
+            opacity: 0.8;
+        }
+
+        .toc {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 1px solid #e0e0e0;
+        }
+
+        .toc h3 {
+            margin-top: 0;
+            color: #1e3c72;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .toc li {
+            margin: 8px 0;
+        }
+
+        .toc a {
+            color: #667eea;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .toc a:hover {
+            color: #1e3c72;
+            text-decoration: underline;
+        }
+
+        .service-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            transition: all 0.3s ease;
+        }
+
+        .service-card:hover {
+            border-color: #e67e22;
+            box-shadow: 0 8px 25px rgba(230, 126, 34, 0.15);
+        }
+
+        .service-card h4 {
+            color: #e67e22;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 0;
+        }
+
+        .service-card .module-path {
+            font-family: 'Consolas', monospace;
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 8px;
+            background: #f5f5f5;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .service-card ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .service-card li {
+            margin: 5px 0;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .architecture-diagram {
+                font-size: 0.85em;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏰 OpenViking Architecture Analysis</h1>
+            <p>A Context Database System Designed for AI Agents</p>
+        </header>
+
+        <div class="content">
+            <!-- Table of Contents -->
+            <div class="toc">
+                <h3>📋 Table of Contents</h3>
+                <ul>
+                    <li><a href="#overview">1. Project Overview</a></li>
+                    <li><a href="#architecture-overview">2. Architecture Overview</a></li>
+                    <li><a href="#core-modules">3. Core Modules Analysis</a></li>
+                    <li><a href="#business-layer">4. Business Layer (Detailed)</a></li>
+                    <li><a href="#architecture-features">5. Architecture Features</a></li>
+                    <li><a href="#deployment">6. Deployment Architecture</a></li>
+                    <li><a href="#data-flow">7. Data Flow</a></li>
+                    <li><a href="#tech-stack">8. Technology Stack Summary</a></li>
+                    <li><a href="#ragfs">9. RAGFS Detailed Documentation</a></li>
+                </ul>
+            </div>
+
+            <!-- 1. Project Overview -->
+            <section id="overview">
+                <h2>1. Project Overview</h2>
+                <div class="overview-box">
+                    <h3>What is OpenViking?</h3>
+                    <p>
+                        <strong>OpenViking</strong> is a <strong>context database</strong> designed for AI agents,
+                        using a "filesystem paradigm" to uniformly manage the memory, resources, and skills required by agents.
+                    </p>
+                    <p>
+                        It addresses core pain points in AI agent development: fragmented context, poor retrieval quality, and lack of observability,
+                        enabling developers to manage agent context like local files.
+                    </p>
+                </div>
+
+                <h3>Core Pain Points and Solutions</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Pain Point</th>
+                            <th>OpenViking Solution</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Context Fragmentation</td>
+                            <td>Unified filesystem management paradigm</td>
+                        </tr>
+                        <tr>
+                            <td>Context Demand Surge</td>
+                            <td>L0/L1/L2 three-layer context loading mechanism</td>
+                        </tr>
+                        <tr>
+                            <td>Poor Retrieval Quality</td>
+                            <td>Recursive directory retrieval strategy</td>
+                        </tr>
+                        <tr>
+                            <td>Unobservable</td>
+                            <td>Visualized retrieval trails</td>
+                        </tr>
+                        <tr>
+                            <td>Non-iterative Memory</td>
+                            <td>Automatic session management and memory extraction</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- 2. Architecture Overview -->
+            <section id="architecture-overview">
+                <h2>2. Architecture Overview</h2>
+                <div class="architecture-diagram">
+<span class="comment">┌─────────────────────────────────────────────────────────────────────────┐</span>
+<span class="comment">│                        OpenViking Architecture                           │</span>
+<span class="comment">├─────────────────────────────────────────────────────────────────────────┤</span>
+<span class="module">│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐               │</span>
+<span class="module">│  │   CLI Tool   │    │   VikingBot   │    │ Web Console  │               │</span>
+<span class="module">│  │  (ov_cli)    │    │ (Agent Fw)    │    │  (Console)   │               │</span>
+<span class="module">│  └──────┬───────┘    └──────┬───────┘    └──────┬───────┘               │</span>
+<span class="comment">│         │                   │                   │                        │</span>
+<span class="arrow">│         └───────────────────┼───────────────────┘                        │</span>
+<span class="comment">│                             │                                            │</span>
+<span class="module">│                    ┌────────▼────────┐                                   │</span>
+<span class="module">│                    │  OpenViking API  │                                   │</span>
+<span class="module">│                    │  (HTTP Server)   │                                   │</span>
+<span class="module">│                    └────────┬────────┘                                   │</span>
+<span class="comment">│                             │                                            │</span>
+<span class="arrow">│         ┌───────────────────┼───────────────────┐                       │</span>
+<span class="comment">│         │                   │                   │                        │</span>
+<span class="module">│  ┌──────▼──────┐    ┌──────▼──────┐    ┌──────▼──────┐                  │</span>
+<span class="module">│  │   Python    │    │    Rust     │    │   Python    │                  │</span>
+<span class="module">│  │ Core Layer  │    │   RAGFS     │    │ Storage     │                  │</span>
+<span class="module">│  └──────┬──────┘    └──────┬──────┘    └──────┬──────┘                  │</span>
+<span class="comment">│         │                   │                   │                        │</span>
+<span class="arrow">│         └───────────────────┼───────────────────┘                        │</span>
+<span class="comment">│                             │                                            │</span>
+<span class="module">│                    ┌────────▼────────┐                                   │</span>
+<span class="module">│                    │    Viking DB     │                                   │</span>
+<span class="module">│                    │   (Vector DB)    │                                   │</span>
+<span class="module">│                    └──────────────────┘                                   │</span>
+<span class="comment">└─────────────────────────────────────────────────────────────────────────┘</span>
+                </div>
+            </section>
+
+            <!-- 3. Core Modules Analysis -->
+            <section id="core-modules">
+                <h2>3. Core Modules Analysis</h2>
+
+                <h3>3.1 Rust Core Modules (crates/)</h3>
+
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4><span class="badge badge-rust">Rust</span> ov_cli - CLI Tool</h4>
+                        <p>Unified command-line interface for interacting with OpenViking server</p>
+                        <ul>
+                            <td>Filesystem operations</td>
+                            <td>Resource management</td>
+                            <td>Search functionality</td>
+                            <td>Session management</td>
+                            <td>Terminal UI</td>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4><span class="badge badge-rust">Rust</span> ragfs - Virtual Filesystem</h4>
+                        <p>Provides unified virtual filesystem interface for multiple backends</p>
+                        <ul>
+                            <td>Local filesystem</td>
+                            <td>KV storage</td>
+                            <td>Memory filesystem</td>
+                            <td>S3 storage</td>
+                            <td>Queue filesystem</td>
+                            <td>SQL storage</td>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4><span class="badge badge-cpp">C++</span> Vector Index Engine</h4>
+                        <p>High-performance vector index implementation</p>
+                        <ul>
+                            <td>Index engine core</td>
+                            <td>Scalar index</td>
+                            <td>Vector index</td>
+                            <td>Sparse retrieval</td>
+                            <td>KV storage</td>
+                        </ul>
+                    </div>
+                </div>
+
+<h3>3.2 Python Core Layer (openviking/)</h3>
+
+<div class="tree-view">
+<pre><span class="dir">openviking/</span>
+├── server/                     # API Service Layer
+│   ├── app.py                  # FastAPI application entry point
+│   ├── bootstrap.py            # Server startup initialization
+│   ├── config.py               # Configuration management
+│   ├── auth.py                 # Authentication
+│   ├── dependencies.py         # API dependency injection
+│   ├── identity.py             # Identity management
+│   └── routers/                # API route modules
+│       ├── __init__.py
+│       ├── admin.py            # Admin API
+│       ├── bot.py              # Bot functionality API
+│       ├── content.py          # Content management API
+│       ├── debug.py            # Debug API
+│       ├── filesystem.rs       # Filesystem API
+│       ├── metrics.py          # Metrics API
+│       ├── observer.py         # Observer API
+│       ├── pack.py             # Pack API
+│       ├── relations.py        # Relations API
+│       ├── resources.rs        # Resource management API
+│       ├── search.rs           # Search API
+│       ├── sessions.rs         # Session management API
+│       ├── stats.py            # Statistics API
+│       ├── system.rs           # System API
+│       └── tasks.rs            # Task management API
+├── core/                       # Core Logic
+│   ├── context.py              # Context management
+│   ├── building_tree.py        # Build context tree
+│   ├── directories.py          # Directory management
+│   ├── skill_loader.py         # Skill loader
+│   └── mcp_converter.py        # MCP protocol converter
+├── storage/                    # Storage Layer
+│   ├── viking_fs.py            # Viking filesystem
+│   ├── viking_vector_index_backend.py
+│   ├── vikingdb_manager.py     # VikingDB management
+│   ├── collection_schemas.py   # Collection schemas
+│   ├── local_fs.py             # Local filesystem
+│   ├── content_write.py        # Content writing
+│   └── errors.py               # Error definitions
+├── observers/                  # Observer Pattern Implementation
+│   ├── base_observer.py        # Observer base class
+│   ├── vikingdb_observer.py    # VikingDB observer
+│   ├── queue_observer.py       # Queue observer
+│   ├── retrieval_observer.py   # Retrieval observer
+│   ├── prometheus_observer.py  # Prometheus observer
+│   └── models_observer.py      # Models observer
+├── queuefs/                    # Queue Filesystem
+│   ├── embedding_queue.py      # Embedding queue
+│   ├── embedding_tracker.py    # Embedding tracker
+│   ├── semantic_processor.py   # Semantic processor
+│   ├── semantic_dag.py         # Semantic DAG
+│   └── queue_manager.py        # Queue manager
+├── vectordb/                   # Vector Database Implementation
+│   └── __init__.py
+├── retrieve/                   # Retrieval Layer
+│   ├── hierarchical_retriever.py   # Hierarchical retriever
+│   ├── intent_analyzer.py      # Intent analyzer
+│   ├── memory_lifecycle.py     # Memory lifecycle
+│   └── retrieval_stats.py      # Retrieval statistics
+├── session/                    # Session Management
+│   └── session.py              # Session core logic
+├── client/                     # API Client
+│   ├── async_client.py         # Async client
+│   └── sync_client.py          # Sync client
+├── models/                     # Data Models
+├── parse/                      # Parsers
+├── resource/                   # Resource Management
+├── prompts/                    # Prompt Templates
+├── crypto/                     # Encryption Module
+├── telemetry/                  # Observability
+├── utils/                      # Utility Functions
+└── console/                    # Web Console
+</pre>
+</div>
+
+<h3>3.3 VikingBot Agent Framework (bot/vikingbot/)</h3>
+
+<div class="tree-view">
+<pre><span class="dir">bot/vikingbot/</span>
+├── agent/                      # Agent Core
+│   ├── loop.py                 # Agent execution loop
+│   ├── memory.py               # Agent memory
+│   ├── context.py              # Context management
+│   ├── skills.py               # Skills system
+│   ├── subagent.py             # Sub-agent
+│   └── tools/                  # Toolset
+│       ├── __init__.py
+│       ├── base.py             # Tool base class
+│       ├── factory.py          # Tool factory
+│       ├── registry.py         # Tool registry
+│       ├── cron.py             # Cron tool
+│       ├── filesystem.py       # Filesystem tool
+│       ├── image.py            # Image processing tool
+│       ├── message.py          # Message tool
+│       ├── ov_file.py          # OpenViking file tool
+│       ├── shell.py            # Shell tool
+│       ├── spawn.py            # Spawn process tool
+│       └── web/                # Web-related tools
+│           ├── web.py          # Web scraping tool
+│           └── websearch/      # Web search
+│               ├── base.py     # Search base class
+│               ├── registry.py # Search registry
+│               ├── brave.py    # Brave search
+│               ├── ddgs.py     # DuckDuckGo search
+│               ├── exa.py      # Exa search
+│               └── tavily.py   # Tavily search
+├── bus/                        # Event Bus
+│   ├── __init__.py
+│   ├── events.py               # Event definitions
+│   └── queue.py                # Queue implementation
+├── channels/                   # Communication Channels
+│   ├── __init__.py
+│   ├── base.py                 # Channel base class
+│   ├── botchannel.py           # Bot channel
+│   ├── chat.py                 # Chat channel
+│   ├── dingtalk.py             # DingTalk
+│   ├── discord.py              # Discord
+│   ├── email.py                # Email
+│   ├── feishu.py               # Feishu
+│   ├── manager.py              # Channel manager
+│   ├── mochat.py               # MoChat
+│   ├── qq.py                   # QQ
+│   ├── single_turn.py          # Single-turn conversation
+│   ├── slack.py                # Slack
+│   ├── telegram.py             # Telegram
+│   ├── utils.py                # Utility functions
+│   └── whatsapp.py             # WhatsApp
+├── cli/                        # Command Line Interface
+│   ├── __init__.py
+│   └── commands.py             # Command definitions
+├── config/                     # Configuration Management
+│   ├── __init__.py
+│   ├── loader.py               # Configuration loader
+│   └── schema.py               # Configuration schema
+├── console/                    # Web Console
+│   ├── __init__.py
+│   └── web_console.py          # Web console entry
+├── cron/                       # Cron Jobs
+│   ├── __init__.py
+│   ├── service.py              # Cron service
+│   └── types.py                # Cron types
+├── heartbeat/                  # Heartbeat Service
+│   ├── __init__.py
+│   └── service.py              # Heartbeat service
+├── hooks/                      # Hook System
+│   ├── __init__.py
+│   ├── base.py                 # Hook base class
+│   ├── manager.py              # Hook manager
+│   └── builtins/               # Built-in hooks
+│       └── __init__.py
+├── openviking_mount/           # OpenViking FUSE Mount
+│   ├── __init__.py
+│   ├── fuse_finder.py          # FUSE finder
+│   ├── fuse_proxy.py           # FUSE proxy
+│   ├── fuse_simple.py          # Simple FUSE
+│   ├── manager.py              # Mount manager
+│   ├── mount.py                # Mount point
+│   ├── ov_server.py            # OV server
+│   ├── session_integration.py  # Session integration
+│   ├── user_apikey_manager.py  # API key management
+│   └── viking_fuse.py          # Viking FUSE
+├── providers/                  # Model Providers
+│   ├── __init__.py
+│   ├── base.py                 # Provider base class
+│   ├── litellm_provider.py     # LiteLLM provider
+│   ├── openai_compatible.py    # OpenAI compatible provider
+│   ├── registry.py             # Provider registry
+│   └── transcription.py        # Transcription
+├── sandbox/                    # Sandbox Environment
+│   ├── __init__.py
+│   ├── base.py                 # Sandbox base class
+│   ├── manager.py              # Sandbox manager
+│   └── backends/               # Sandbox backends
+│       ├── __init__.py
+│       ├── aiosandbox.py       # asyncio sandbox
+│       ├── direct.py           # Direct execution
+│       └── opensandbox.py      # OpenSandbox
+├── session/                    # Session Management
+│   ├── __init__.py
+│   └── manager.py              # Session manager
+├── utils/                      # Utility Functions
+│   ├── __init__.py
+│   ├── helpers.py              # Helper functions
+│   └── tracing.py              # Tracing tools
+├── __init__.py
+└── __main__.py                 # Module entry
+</pre>
+</div>
+            </section>
+
+            <!-- 4. Business Layer (Detailed) -->
+            <section id="business-layer">
+                <h2>4. Business Layer (Detailed)</h2>
+                
+                <div class="overview-box">
+                    <h3>Business Layer Overview</h3>
+                    <p>
+                        The <strong>Business Layer</strong> in OpenViking is the core service layer located in 
+                        <code>openviking/service/</code>. It provides high-level business logic and operations that 
+                        abstract the underlying storage and filesystem layers.
+                    </p>
+                    <p>
+                        The <code>OpenVikingService</code> class (<code>openviking/service/core.py</code>) acts as the 
+                        central orchestrator, composing all sub-services and managing the infrastructure lifecycle.
+                    </p>
+                </div>
+
+                <h3>4.1 OpenVikingService - Central Orchestrator</h3>
+                <div class="service-card">
+                    <h4><span class="badge badge-service">Core Service</span> OpenVikingService</h4>
+                    <p>Main service class that composes all sub-services and manages infrastructure lifecycle.</p>
+                    <div class="module-path">File: openviking/service/core.py</div>
+                    <h5>Key Responsibilities:</h5>
+                    <ul>
+                        <li><strong>Service Composition</strong> - Composes all sub-services (FS, Search, Session, etc.)</li>
+                        <li><strong>Infrastructure Management</strong> - Initializes and manages storage resources, AGFS client, VikingDB, QueueManager</li>
+                        <li><strong>Directory Initialization</strong> - Creates preset directory structure for accounts, users, and agents</li>
+                        <li><strong>Processor Initialization</strong> - Initializes ResourceProcessor, SkillProcessor, SessionCompressor</li>
+                        <li><strong>Security</strong> - Bootstrap encryption module and lock management</li>
+                    </ul>
+                    <h5>Key Properties:</h5>
+                    <ul>
+                        <li><code>fs</code> - FSService instance</li>
+                        <li><code>relations</code> - RelationService instance</li>
+                        <li><code>pack</code> - PackService instance</li>
+                        <li><code>search</code> - SearchService instance</li>
+                        <li><code>resources</code> - ResourceService instance</li>
+                        <li><code>sessions</code> - SessionService instance</li>
+                        <li><code>debug</code> - DebugService instance</li>
+                    </ul>
+                </div>
+
+                <h3>4.2 Sub-Services</h3>
+
+                <div class="service-card">
+                    <h4><span class="badge badge-service">FSService</span> FileSystem Service</h4>
+                    <div class="module-path">File: openviking/service/fs_service.py</div>
+                    <p>Provides filesystem operations such as create, read, delete, and list operations on resources.</p>
+                    <h5>Key Operations:</h5>
+                    <ul>
+                        <li>Create/delete files and directories</li>
+                        <li>Read/write file content</li>
+                        <li>List directory contents</li>
+                        <li>File system navigation</li>
+                    </ul>
+                </div>
+
+                <div class="service-card">
+                    <h4><span class="badge badge-service">SearchService</span> Search Service</h4>
+                    <div class="module-path">File: openviking/service/search_service.py</div>
+                    <p>Enables text search and retrieval across all resources.</p>
+                    <h5>Key Operations:</h5>
+                    <ul>
+                        <li>Full-text search across resources</li>
+                        <li>Vector-based semantic search</li>
+                        <li>Hierarchical retrieval</li>
+                        <li>Search result ranking and filtering</li>
+                    </ul>
+                </div>
+
+                <div class="service-card">
+                    <h4><span class="badge badge-service">SessionService</span> Session Service</h4>
+                    <div class="module-path">File: openviking/service/session_service.py</div>
+                    <p>Manages AI agent sessions, including session creation, lifecycle, and memory management.</p>
+                    <h5>Key Operations:</h5>
+                    <ul>
+                        <li>Create, update, delete sessions</li>
+                        <li>Session history management</li>
+                        <li>Session compression</li>
+                        <li>Memory extraction and storage</li>
+                    </ul>
+                </div>
+
+                <div class="service-card">
+                    <h4><span class="badge badge-service">ResourceService</span> Resource Service</h4>
+                    <div class="module-path">File: openviking/service/resource_service.py</div>
+                    <p>Manages resource lifecycle including upload, watch, and processing.</p>
+                    <h5>Key Operations:</h5>
+                    <ul>
+                        <li>Resource upload and creation</li>
+                        <li>Watch scheduler integration</li>
+                        <li>Resource processing pipeline</li>
+                        <li>Skill loading and management</li>
+                    </ul>
+                </div>
+
+                <div class="service-card">
+                    <h4><span class="badge badge-service">RelationService</span> Relation Service</h4>
+                    <div class="module-path">File: openviking/service/relation_service.py</div>
+                    <p>Manages relationships between resources (e.g., dependencies, references).</p>
+                    <h5>Key Operations:</h5>
+                    <ul>
+                        <li>Resource relationship creation</li>
+                        <li>Query resource dependencies</li>
+                        <li>Graph traversal</li>
+                        <li>Relation update and deletion</li>
+                    </ul>
+                </div>
+
+                <div class="service-card">
+                    <h4><span class="badge badge-service">PackService</span> Pack Service</h4>
+                    <div class="module-path">File: openviking/service/pack_service.py</div>
+                    <p>Provides packaging functionality for resources and sessions.</p>
+                    <h5>Key Operations:</h5>
+                    <ul>
+                        <li>Package resources into archives</li>
+                        <li>Export sessions</li>
+                        <li>Package import and extraction</li>
+                    </ul>
+                </div>
+
+                <div class="service-card">
+                    <h4><span class="badge badge-service">DebugService</span> Debug Service</h4>
+                    <div class="module-path">File: openviking/service/debug_service.py</div>
+                    <p>Provides debugging and diagnostic tools for OpenViking.</p>
+                    <h5>Key Operations:</h5>
+                    <ul>
+                        <li>Configuration inspection</li>
+                        <li>Performance metrics</li>
+                        <li>Debug query execution</li>
+                    </ul>
+                </div>
+
+                <h3>4.3 Service Initialization Flow</h3>
+                <div class="architecture-diagram">
+┌──────────────────────────────────────────────────────────────┐
+│  OpenVikingService Initialization Flow                        │
+├──────────────────────────────────────────────────────────────┤
+│                                                               │
+│  1. __init__(path, user)                                      │
+│     └─ Initialize config and user identifier                 │
+│                                                               │
+│  2. _init_storage(config)                                    │
+│     ├─ Initialize AGFSManager (filesystem server)            │
+│     ├─ Create AGFS client                                    │
+│     ├─ Initialize QueueManager (vectorization queue)         │
+│     ├─ Initialize VikingDBManager (vector database)          │
+│     └─ Initialize LockManager (distributed locking)          │
+│                                                               │
+│  3. initialize() (Async)                                     │
+│     ├─ Acquire data directory lock                           │
+│     ├─ Initialize encryption module                          │
+│     ├─ Create context collection in VikingDB                 │
+│     ├─ Initialize VikingFS (with recorder if enabled)        │
+│     ├─ Start QueueManager workers                            │
+│     ├─ Initialize directory structure (account/user)          │
+│     ├─ Initialize processors (Resource/Skill/Session)        │
+│     ├─ Start LockManager                                     │
+│     ├─ Start WatchScheduler                                  │
+│     └─ Wire up sub-services with dependencies                │
+│                                                               │
+│  4. Sub-service Wiring                                        │
+│     ├─ fs.set_viking_fs()                                    │
+│     ├─ relations.set_viking_fs()                             │
+│     ├─ pack.set_viking_fs()                                  │
+│     ├─ search.set_viking_fs()                                │
+│     ├─ resources.set_dependencies()                          │
+│     ├─ sessions.set_dependencies()                           │
+│     └─ debug.set_dependencies()                              │
+│                                                               │
+└──────────────────────────────────────────────────────────────┘
+                </div>
+
+                <h3>4.4 Service Dependencies</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>Primary Dependencies</th>
+                            <th>Key Infrastructure</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>FSService</td>
+                            <td>VikingFS</td>
+                            <td>AGFS Client</td>
+                        </tr>
+                        <tr>
+                            <td>SearchService</td>
+                            <td>VikingFS, VikingDB</td>
+                            <td>Embedder, Reranker</td>
+                        </tr>
+                        <tr>
+                            <td>SessionService</td>
+                            <td>VikingFS, VikingDB, SessionCompressor</td>
+                            <td>QueueManager</td>
+                        </tr>
+                        <tr>
+                            <td>ResourceService</td>
+                            <td>VikingFS, VikingDB, ResourceProcessor</td>
+                            <td>WatchScheduler, SkillProcessor</td>
+                        </tr>
+                        <tr>
+                            <td>RelationService</td>
+                            <td>VikingFS</td>
+                            <td>VikingDB</td>
+                        </tr>
+                        <tr>
+                            <td>PackService</td>
+                            <td>VikingFS</td>
+                            <td>VikingDB</td>
+                        </tr>
+                        <tr>
+                            <td>DebugService</td>
+                            <td>VikingDB, Config</td>
+                            <td>LockManager</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- 5. Architecture Features -->
+            <section id="architecture-features">
+                <h2>5. Architecture Features</h2>
+
+                <h3>5.1 Multi-language Hybrid Architecture</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Language</th>
+                            <th>Usage</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge badge-rust">Rust</span></td>
+                            <td>Filesystem core, CLI tools</td>
+                            <td>High performance, memory safe</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-python">Python</span></td>
+                            <td>Business logic, Agent framework, API service</td>
+                            <td>Fast development, rich ecosystem</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-cpp">C++</span></td>
+                            <td>Vector index engine</td>
+                            <td>Peak performance, numerical computing</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>5.2 Layered Design</h3>
+                <div class="architecture-diagram">
+<span class="comment">┌─────────────────────────────────────────────────────────────┐</span>
+<span class="comment">│        Application Layer (CLI/Bot/Console)                  │</span>
+<span class="comment">├─────────────────────────────────────────────────────────────┤</span>
+<span class="comment">│        API Layer (FastAPI Routers)                          │</span>
+<span class="comment">├─────────────────────────────────────────────────────────────┤</span>
+<span class="comment">│        Business Layer (Service/Retrieve)                    │</span>
+<span class="comment">├─────────────────────────────────────────────────────────────┤</span>
+<span class="comment">│        Storage Layer (Storage/Vector DB)                    │</span>
+<span class="comment">├─────────────────────────────────────────────────────────────┤</span>
+<span class="comment">│        Filesystem Layer (RAGFS)                             │</span>
+<span class="comment">└─────────────────────────────────────────────────────────────┘</span>
+                </div>
+
+                <h3>5.3 Core Concept Mapping</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Concept</th>
+                            <th>Implementation Location</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Viking URI</td>
+                            <td>openviking/core/context.py</td>
+                            <td>viking:// protocol unified resource locator</td>
+                        </tr>
+                        <tr>
+                            <td>Three-layer Context</td>
+                            <td>openviking/core/building_tree.py</td>
+                            <td>L0/L1/L2 hierarchical structure</td>
+                        </tr>
+                        <tr>
+                            <td>Recursive Retrieval</td>
+                            <td>openviking/retrieve/hierarchical_retriever.py</td>
+                            <td>Directory recursive search strategy</td>
+                        </tr>
+                        <tr>
+                            <td>Session Management</td>
+                            <td>openviking/session/session.py</td>
+                            <td>Automatic memory extraction</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- 6. Deployment Architecture -->
+            <section id="deployment">
+                <h2>6. Deployment Architecture (Docker)</h2>
+                
+                <div class="overview-box">
+                    <h3>Docker Compose Configuration</h3>
+                    <p>OpenViking uses Docker Compose for containerized deployment with the following configuration:</p>
+                </div>
+
+<pre style="background: #1a1a2e; color: #00ff88; font-family: 'Consolas', 'Monaco', monospace; padding: 20px; border-radius: 10px; overflow-x: auto;">version: "3.8"
+
+services:
+  openviking:
+    image: ghcr.io/volcengine/openviking:latest
+    container_name: openviking
+    ports:
+      - "1933:1933"  # HTTP API
+      - "8020:8020"  # Other services
+    volumes:
+      - /var/lib/openviking/ov.conf:/app/ov.conf
+      - /var/lib/openviking/data:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:1933/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+</pre>
+
+                <h3>Port Mappings</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Port</th>
+                            <th>Internal Port</th>
+                            <th>Protocol</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1933</td>
+                            <td>1933</td>
+                            <td>TCP</td>
+                            <td>HTTP API Server</td>
+                        </tr>
+                        <tr>
+                            <td>8020</td>
+                            <td>8020</td>
+                            <td>TCP</td>
+                            <td>Additional Services</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Volume Mappings</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Host Path</th>
+                            <th>Container Path</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>/var/lib/openviking/ov.conf</td>
+                            <td>/app/ov.conf</td>
+                            <td>Configuration file</td>
+                        </tr>
+                        <tr>
+                            <td>/var/lib/openviking/data</td>
+                            <td>/app/data</td>
+                            <td>Application data storage</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="highlight-box info">
+                    <h4>Deployment Commands</h4>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li><code>docker-compose up -d</code> - Start services in detached mode</li>
+                        <li><code>docker-compose logs -f</code> - View logs</li>
+                        <li><code>docker-compose down</code> - Stop and remove containers</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 7. Data Flow -->
+            <section id="data-flow">
+                <h2>7. Data Flow</h2>
+
+                <h3>7.1 Resource Loading Flow</h3>
+                <div class="architecture-diagram">
+User Request → AGFS Client → RAGFS Server → Storage
+   │            │              │           │
+   │            ▼              ▼           ▼
+   │     HTTP Request    Mount Filesystem
+   │     GET /viking://  ┌─────────────────┐
+   │                      │ viking:// → /data/viking/
+   │                      │ /resources → /data/viking/resources/
+   │                      └─────────────────┘
+   │
+   └──→ Read .abstract.md (L0)
+        Read .overview.md (L1)
+        Read original content (L2)
+                </div>
+
+                <h3>7.2 Vector Processing Queue Flow (QueueFS)</h3>
+                <div class="architecture-diagram">
+┌───────────────────────────────────────────────────────────┐
+│                    QueueFS Plugin                          │
+│                                                           │
+│  1. New resource write → queuefs://embeddings/queue/       │
+│  2. Create embedding message (SemanticMsg)                │
+│  3. Async processor consumes queue                        │
+│  4. Call Embedding API to generate vectors                │
+│  5. Write to VikingDB vector database                     │
+│  6. Generate .abstract.md and .overview.md                │
+└───────────────────────────────────────────────────────────┘
+                </div>
+
+                <h3>7.3 Retrieval Flow</h3>
+                <div class="highlight-box info">
+                    <strong>Retrieval Strategy - Five Steps:</strong>
+                    <ol style="margin-left: 20px; margin-top: 10px;">
+                        <li><strong>Intent Analysis</strong> → Generate multiple retrieval conditions</li>
+                        <li><strong>Initial Positioning</strong> → Vector retrieval quickly locates high-score directories</li>
+                        <li><strong>Refinement & Exploration</strong> → Perform secondary retrieval within that directory</li>
+                        <li><strong>Recursive Drill-down</strong> → If subdirectories exist, recursively perform secondary retrieval</li>
+                        <li><strong>Result Aggregation</strong> → Retrieve the most relevant context and return</li>
+                    </ol>
+                </div>
+            </section>
+
+            <!-- 8. Technology Stack Summary -->
+            <section id="tech-stack">
+                <h2>8. Technology Stack Summary</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Layer</th>
+                            <th>Technology</th>
+                            <th>Usage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge badge-core">Languages</span></td>
+                            <td>Rust, Python, C++</td>
+                            <td>Multilingual collaborative development</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-api">Web Framework</span></td>
+                            <td>FastAPI</td>
+                            <td>HTTP API service</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-rust">Filesystem</span></td>
+                            <td>RAGFS (Rust)</td>
+                            <td>Virtual filesystem</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-storage">Vector Database</span></td>
+                            <td>VikingDB</td>
+                            <td>Vector indexing and retrieval</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-core">Parser</span></td>
+                            <td>tree-sitter</td>
+                            <td>Code parsing</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-storage">Observability</span></td>
+                            <td>OpenTelemetry</td>
+                            <td>Monitoring and tracing</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-core">Deployment</span></td>
+                            <td>Docker, Helm</td>
+                            <td>Containerization and K8s</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- 9. RAGFS Detailed Documentation -->
+            <section id="ragfs">
+                <h2>9. RAGFS Detailed Documentation</h2>
+                
+                <div class="overview-box">
+                    <h3>What is RAGFS?</h3>
+                    <p>
+                        <strong>RAGFS</strong> = <strong>R</strong>etrieval-<strong>A</strong>ugmented <strong>G</strong>eneration <strong>FS</strong> (File System)
+                    </p>
+                    <p>
+                        RAGFS is OpenViking's core filesystem abstraction layer, an <strong>aggregated filesystem</strong> implemented in Rust,
+                        providing a unified file operation interface for AI agents, allowing agents to operate distributed context data like local files.
+                    </p>
+                </div>
+
+                <h3>RAGFS Core Uses</h3>
+                
+                <h4>1. Unified Filesystem Abstraction</h4>
+                <div class="architecture-diagram">
+┌─────────────────────────────────────────────────────────────────┐
+│                      RAGFS Core API                               │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  FileSystem Trait:                                       │   │
+│  │  - create(path)     # Create file                        │   │
+│  │  - mkdir(path)      # Create directory                   │   │
+│  │  - read(path)       # Read content                       │   │
+│  │  - write(path)      # Write content                      │   │
+│  │  - rm(path)         # Delete                             │   │
+│  │  - stat(path)       # Get file info                      │   │
+│  │  - read_dir(path)   # List directory contents            │   │
+│  │  - rename(old, new) # Move/Rename                        │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                              │                                    │
+│         ┌────────────────────┼────────────────────┐              │
+│         ▼                    ▼                    ▼              │
+│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐        │
+│  │ LocalFS     │     │ KVFS        │     │ MemFS       │        │
+│  │ (Local File)│     │ (KV Store)  │     │ (Memory)    │        │
+│  └─────────────┘     └─────────────┘     └─────────────┘        │
+│         │                    │                    │              │
+│         ▼                    ▼                    ▼              │
+│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐        │
+│  │ QueueFS     │     │ S3FS        │     │ SQLFS       │        │
+│  │ (Queue Proc)│     │ (S3 Obj)    │     │ (SQL Store) │        │
+│  └─────────────┘     └─────────────┘     └─────────────┘        │
+└─────────────────────────────────────────────────────────────────┘
+                </div>
+
+                <h4>2. RAGFS Plugin System</h4>
+                <div class="plugin-list">
+                    <div class="plugin-item">
+                        <strong>LocalFS</strong><br>
+                        Local filesystem - Persistent storage for agent context data
+                    </div>
+                    <div class="plugin-item">
+                        <strong>KVFS</strong><br>
+                        KV storage - Fast key-value data access (e.g., metadata)
+                    </div>
+                    <div class="plugin-item">
+                        <strong>MemFS</strong><br>
+                        Memory filesystem - High-speed temporary storage
+                    </div>
+                    <div class="plugin-item">
+                        <strong>QueueFS</strong><br>
+                        Queue filesystem - Async processing (vectorization task queue)
+                    </div>
+                    <div class="plugin-item">
+                        <strong>S3FS</strong><br>
+                        S3 storage - S3-compatible object storage
+                    </div>
+                    <div class="plugin-item">
+                        <strong>SQLFS</strong><br>
+                        SQL storage - Relational data storage
+                    </div>
+                </div>
+
+                <h4>3. Three-layer Context Structure (L0/L1/L2)</h4>
+<div class="tree-view">
+<pre><span class="dir">viking://resources/my_project/</span>
+│
+<span class="abstract">├── .abstract.md        # L0: One-click summary (~100 tokens) - Quick filtering</span>
+<span class="overview">├── .overview.md        # L1: Detailed overview (~2k tokens) - Planning phase</span>
+<span class="dir">└── docs/</span>
+<span class="abstract">    ├── .abstract.md    # Each directory has L0/L1</span>
+<span class="overview">    ├── .overview.md</span>
+<span class="file">    ├── api/</span>
+<span class="abstract">    │   ├── .abstract.md</span>
+<span class="overview">    │   ├── .overview.md</span>
+<span class="file">    │   └── auth.md     # L2: Full content (loaded on demand)</span>
+<span class="file">    └── tutorial.md</span>
+</pre>
+</div>
+
+                <h4>4. RAGFS Position in OpenViking</h4>
+                <div class="architecture-diagram">
+┌───────────────────────────────────────────────────────────┐
+│                      OpenViking Architecture                │
+├───────────────────────────────────────────────────────────┤
+│  CLI / VikingBot / API Client                             │
+│         ↓                                                  │
+│  ┌──────────────────────┐                                 │
+│  │    VikingFS (Python)  │  ← Python abstraction layer    │
+│  │  - URI conversion    │                                 │
+│  │  - L0/L1 handling    │                                 │
+│  │  - Encryption/Decr.  │                                 │
+│  │  - Vector sync       │                                 │
+│  └──────────┬───────────┘                                 │
+│             ↓                                              │
+│  ┌──────────────────────┐                                 │
+│  │      AGFS Client      │  ← RAGFS Python client         │
+│  │  - HTTP Mode         │  (HTTP communication)          │
+│  │  - Binding Mode      │  (Rust FFI direct call)         │
+│  └──────────┬───────────┘                                 │
+│             ↓                                              │
+│  ┌──────────────────────┐                                 │
+│  │      RAGFS Server     │  ← Rust filesystem server       │
+│  │  - Plugin Registry   │                                 │
+│  │  - Mount Points      │                                 │
+│  │  - HTTP API          │                                 │
+│  └──────────┬───────────┘                                 │
+│             ↓                                              │
+│  ┌──────────────────────┐                                 │
+│  │   Plugin Backends    │  ← Specific storage backends    │
+│  │  - LocalFS (SQLite)  │                                 │
+│  │  - QueueFS (Embed)   │                                 │
+│  │  - VectorDB          │                                 │
+│  └──────────────────────┘                                 │
+└───────────────────────────────────────────────────────────┘
+                </div>
+
+                <div class="highlight-box success">
+                    <h4>RAGFS Key Advantages</h4>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li><strong>Unified Interface</strong>: Same FileSystem trait for different backends</li>
+                        <li><strong>Plugin-based</strong>: Flexibly add new storage backends</li>
+                        <li><strong>High Performance</strong>: Rust implementation with async I/O</li>
+                        <li><strong>Extensible</strong>: Support mounting multiple path types</li>
+                        <li><strong>Unified Protocol</strong>: Unified resource locator via viking:// protocol</li>
+                    </ul>
+                </div>
+
+                <h4>5. RAGFS vs VikingFS Relationship</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Layer</th>
+                            <th>Name</th>
+                            <th>Language</th>
+                            <th>Responsibility</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Core Layer</td>
+                            <td>RAGFS</td>
+                            <td>Rust</td>
+                            <td>Filesystem abstraction + multi-backend support</td>
+                        </tr>
+                        <tr>
+                            <td>Client Layer</td>
+                            <td>AGFS Client</td>
+                            <td>Python/Rust</td>
+                            <td>RAGFS HTTP/FFI client</td>
+                        </tr>
+                        <tr>
+                            <td>Business Layer</td>
+                            <td>VikingFS</td>
+                            <td>Python</td>
+                            <td>OpenViking-specific business logic</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <footer>
+                <p><strong>OpenViking</strong> - A Context Database System Designed for AI Agents</p>
+                <p>Architecture Analysis Document</p>
+                <p style="font-size: 0.9em; margin-top: 10px;">
+                    Generated from project analysis • 2026
+                </p>
+            </footer>
+        </div>
+    </div>
+</body>
+</html>
