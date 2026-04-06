@@ -25,7 +25,7 @@ class OpenAIRerankClient(RerankBase):
     Compatible with services like Alibaba Cloud DashScope.
     """
 
-    def __init__(self, api_key: str, api_base: str, model_name: str):
+    def __init__(self, api_key: str, api_base: str, model_name: str, timeout: float = 120.0):
         """
         Initialize OpenAI-compatible rerank client.
 
@@ -33,12 +33,14 @@ class OpenAIRerankClient(RerankBase):
             api_key: Bearer token for authentication
             api_base: Full endpoint URL for the rerank API
             model_name: Model name to use for reranking
+            timeout: API request timeout in seconds (default: 120.0)
         """
         super().__init__()
         self.api_key = api_key
         self.api_base = api_base
         self.model_name = model_name
         self.provider = "openai"
+        self.timeout = timeout
 
     def rerank_batch(self, query: str, documents: List[str]) -> Optional[List[float]]:
         """
@@ -69,7 +71,7 @@ class OpenAIRerankClient(RerankBase):
                     "Content-Type": "application/json",
                 },
                 json=req_body,
-                timeout=30,
+                timeout=self.timeout,
             )
             response.raise_for_status()
             result = response.json()
@@ -126,4 +128,5 @@ class OpenAIRerankClient(RerankBase):
             api_key=config.api_key,
             api_base=config.api_base,
             model_name=config.model or "qwen3-rerank",
+            timeout=config.timeout,
         )

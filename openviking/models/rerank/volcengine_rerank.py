@@ -36,6 +36,7 @@ class RerankClient(RerankBase):
         host: str = "api-vikingdb.vikingdb.cn-beijing.volces.com",
         model_name: str = "doubao-seed-rerank",
         model_version: str = "251028",
+        timeout: float = 120.0,
     ):
         """
         Initialize rerank client.
@@ -46,6 +47,7 @@ class RerankClient(RerankBase):
             host: VikingDB API host
             model_name: Rerank model name
             model_version: Rerank model version
+            timeout: API request timeout in seconds (default: 120.0)
         """
         super().__init__()
         self.ak = ak
@@ -54,6 +56,7 @@ class RerankClient(RerankBase):
         self.model_name = model_name
         self.model_version = model_version
         self.provider = "vikingdb"
+        self.timeout = timeout
 
     def _prepare_request(
         self,
@@ -67,7 +70,7 @@ class RerankClient(RerankBase):
         r.set_shema("https")
         r.set_method(method)
         r.set_connection_timeout(10)
-        r.set_socket_timeout(30)
+        r.set_socket_timeout(int(self.timeout))
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
@@ -120,7 +123,7 @@ class RerankClient(RerankBase):
                 url=f"https://{self.host}{req.path}",
                 headers=req.headers,
                 data=req.body,
-                timeout=30,
+                timeout=self.timeout,
             )
 
             result = response.json()
@@ -187,4 +190,5 @@ class RerankClient(RerankBase):
             host=config.host,
             model_name=config.model_name,
             model_version=config.model_version,
+            timeout=config.timeout,
         )
