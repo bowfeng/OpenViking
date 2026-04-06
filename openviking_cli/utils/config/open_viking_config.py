@@ -20,6 +20,7 @@ from .consts import (
 )
 from .embedding_config import EmbeddingConfig
 from .encryption_config import EncryptionConfig
+from .session_config import SessionConfig
 from .telemetry_config import TelemetryConfig
 from .log_config import LogConfig
 from .memory_config import MemoryConfig
@@ -160,6 +161,10 @@ class OpenVikingConfig(BaseModel):
         description="Prompt template configuration",
     )
 
+    session: SessionConfig = Field(
+        default_factory=lambda: SessionConfig(), description="Session configuration"
+    )
+
     model_config = {"arbitrary_types_allowed": True, "extra": "forbid"}
 
     @classmethod
@@ -218,6 +223,11 @@ class OpenVikingConfig(BaseModel):
             if "memory" in config_copy:
                 memory_config_data = config_copy.pop("memory")
 
+            # Handle session configuration from nested "session" section
+            session_config_data = None
+            if "session" in config_copy:
+                session_config_data = config_copy.pop("session")
+
             instance = cls(**config_copy)
 
             # Apply log configuration
@@ -227,6 +237,10 @@ class OpenVikingConfig(BaseModel):
             # Apply memory configuration
             if memory_config_data is not None:
                 instance.memory = MemoryConfig.from_dict(memory_config_data)
+
+            # Apply session configuration
+            if session_config_data is not None:
+                instance.session = SessionConfig.from_dict(session_config_data)
 
             # Apply parser configurations
             for parser_type, parser_data in parser_configs.items():

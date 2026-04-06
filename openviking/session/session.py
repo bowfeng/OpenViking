@@ -29,7 +29,43 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 _ARCHIVE_WAIT_POLL_SECONDS = 0.1
-_ARCHIVE_WAIT_TIMEOUT_SECONDS = 300.0  # 5 minutes max wait for previous archive
+
+
+def _get_archive_wait_timeout() -> float:
+    """Get the archive wait timeout from configuration.
+    
+    Returns the configured timeout in seconds, with a default of 600 seconds (10 minutes).
+    The timeout can be configured via environment variable ARCHIVE_WAIT_TIMEOUT_SECONDS
+    or through the OpenVikingConfig session.archive_wait_timeout setting.
+    
+    Returns:
+        Timeout in seconds as a float.
+    """
+    import os
+    
+    # Check environment variable first (takes precedence)
+    env_timeout = os.environ.get("ARCHIVE_WAIT_TIMEOUT_SECONDS")
+    if env_timeout:
+        try:
+            return float(env_timeout)
+        except ValueError:
+            logger.warning(f"Invalid ARCHIVE_WAIT_TIMEOUT_SECONDS value: {env_timeout}, using default 600")
+    
+    # Fall back to config
+    try:
+        config = get_openviking_config()
+        # Check for session.archive_wait_timeout setting
+        if hasattr(config, 'session') and hasattr(config.session, 'archive_wait_timeout'):
+            return float(config.session.archive_wait_timeout)
+    except Exception:
+        pass  # Fall through to default
+    
+    # Default: 600 seconds (10 minutes)
+    return 600.0
+
+
+# Use the configurable timeout
+_ARCHIVE_WAIT_TIMEOUT_SECONDS = _get_archive_wait_timeout()
 
 
 @dataclass
